@@ -1,10 +1,10 @@
 # CoreChoice backend — production stack.
 #
-# Deployed alongside Coldstart and PurePrep on the same Hetzner host, reusing Coldstart's Caddy
-# (the `coldstart_default` network) for automatic HTTPS. This stack therefore runs only the app
+# Deployed alongside Coldstart and PurePrep on the same Hetzner host, reusing the edge Caddy (Lech-Digital/lechdigital-infra)
+# (the `lechdigital_edge` network) for automatic HTTPS. This stack therefore runs only the app
 # container; TLS and routing belong to that shared Caddy.
 #
-# Add a reverse_proxy block to Coldstart's Caddyfile pointing api.corechoice.lechdigital.nl at
+# Add a reverse_proxy block to the edge Caddy (Lech-Digital/lechdigital-infra)file pointing api.corechoice.lechdigital.nl at
 # corechoice:8080.
 #
 # Deploy (from /opt/corechoice on the server):
@@ -23,7 +23,8 @@ services:
     build:
       context: ..
       dockerfile: Dockerfile
-    image: corechoice-api
+    # Tagged with the commit by the deploy workflow (lechdigital-infra); a build on the server makes :latest.
+    image: corechoice-api:${IMAGE_TAG:-latest}
     container_name: corechoice-api
     restart: unless-stopped
     environment:
@@ -48,7 +49,7 @@ services:
       # The coin ledger persists across redeploys.
       - corechoice-data:/data
     networks:
-      - coldstart_default
+      - lechdigital_edge
     expose:
       - "8080"
     healthcheck:
@@ -58,9 +59,9 @@ services:
       retries: 3
       start_period: 20s
 
-# Coldstart's Caddy lives on this network; joining it lets Caddy reach us by name.
+# the edge Caddy (Lech-Digital/lechdigital-infra) lives on this network; joining it lets Caddy reach us by name.
 networks:
-  coldstart_default:
+  lechdigital_edge:
     external: true
 
 volumes:
